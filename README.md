@@ -5,7 +5,7 @@ Machine Learning Assignment 2
 
 | Dataset        | Train           | Test  |
 |:-------------:|:-----------------|:-----:|
-| A             | ![A Train](./data_dist/A_train.jpg) | ![A Test](./data_dist/A_test.jpg) |
-| B             | ![B Train](./data_dist/B_train.jpg) | ![B Test](./data_dist/B_test.jpg) |
-| C             | ![C Train](./data_dist/C_train.jpg) | ![C Test](./data_dist/C_test.jpg) |
+| A             | ![A Train](./data_dist/A_train.png) | ![A Test](./data_dist/A_test.png) |
+| B             | ![B Train](./data_dist/B_train.png) | ![B Test](./data_dist/B_test.png) |
+| C             | ![C Train](./data_dist/C_train.png) | ![C Test](./data_dist/C_test.png) |
 
