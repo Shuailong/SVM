@@ -8,7 +8,9 @@ Created by Shuailong on 2016-03-08.
 
 Qudratic Programming to solve SVM with errors and offset.
 
-Reference: http://www.gurobi.com/documentation/6.5/examples/qp_py.html
+Reference: 
+        1. http://www.gurobi.com/documentation/6.5/examples/qp_py.html
+        2. https://github.com/cmaes/svmexample/blob/master/svm.py
 
 """
 
@@ -45,7 +47,7 @@ def primal(C, X, y):
     m.setObjective(obj, GRB.MINIMIZE)
 
     for i in range(N):
-        m.addConstr(y[i] * np.inner(theta, X[i]) >= 1 - xi[i])
+        m.addConstr(y[i] * (np.inner(theta, X[i]) + theta0) >= 1 - xi[i])
 
     m.optimize()
 
@@ -85,8 +87,12 @@ def dual(C, X, y):
     m.optimize()
 
     theta = sum([np.multiply(alphas[i].X*y[i], X[i]) for i in range(N)])
-    theta0 = np.median([y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in range(N) if alphas[i].X > 0 and alphas[i].X < C])
-    
+
+    theta0s = [y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < C*0.99999]
+    theta0 = np.median(theta0s)
+
+    print 'Number of support vectors:', len(theta0s)
+
     return theta, theta0
 
 def main():

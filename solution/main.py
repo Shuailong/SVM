@@ -12,9 +12,11 @@ Main entry of Machine Learining Assignment 2.
 
 from dataset import read_data
 from qp import primal, dual
+from vis import plot
 
 from time import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 def predict_point(x, theta, theta0):
     '''
@@ -70,7 +72,8 @@ def main():
 
     C = 1.0
 
-    datasets = ['A', 'B', 'C']
+    datasets = ['A','B','C']
+
     for dataset in datasets:
         print '#######################################'
         print '# Dataset:', dataset, '                         #'
@@ -79,11 +82,20 @@ def main():
         trainX, trainY = read_data(dataset, 'train')
         testX, testY = read_data(dataset, 'test')
 
+        trainXPos = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == 1])
+        trainXNeg = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == -1])
+
+        if len(trainXPos) > 0:
+            plt.plot(trainXPos[:,0], trainXPos[:,1], 'ro')
+        if len(trainXNeg) > 0:
+            plt.plot(trainXNeg[:,0], trainXNeg[:,1], 'bo')
+
         # Primal form SVM
         print '[Primal form]'
         optimize_func = primal
         print 'Optimizing...'
         theta, theta0 = optimize_func(C, trainX, trainY)
+
         print 'Pridicting...'
         train_Y = predict(trainX, theta, theta0)
         train_score = score(train_Y, trainY)
@@ -98,6 +110,7 @@ def main():
         optimize_func = dual
         print 'Optimizing...'
         theta, theta0 = optimize_func(C, trainX, trainY)
+
         print 'Pridicting...'
         train_Y = predict(trainX, theta, theta0)
         train_score = score(train_Y, trainY)
@@ -108,7 +121,8 @@ def main():
         print '---------------------------------------'
 
         print
-
+        
+    plt.show()
     print
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'
 
