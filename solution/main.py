@@ -85,10 +85,9 @@ def main():
         trainXPos = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == 1])
         trainXNeg = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == -1])
 
-        if len(trainXPos) > 0:
-            plt.plot(trainXPos[:,0], trainXPos[:,1], 'ro')
-        if len(trainXNeg) > 0:
-            plt.plot(trainXNeg[:,0], trainXNeg[:,1], 'bo')
+        if len(trainXPos) == 0 or len(trainXNeg) == 0:
+            # raise ValueError('Only one class in training set!')
+            pass
 
         # Primal form SVM
         print '[Primal form]'
@@ -121,8 +120,7 @@ def main():
         print '---------------------------------------'
 
         print
-        
-    plt.show()
+
     print
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'
 

@@ -37,14 +37,14 @@ def primal(C, X, y):
 
     m = Model("qp")
 
-    theta = [m.addVar(lb =- GRB.INFINITY, name = 'theta' + str(i+1)) for i in range(M)]
-    theta0 = m.addVar(lb =- GRB.INFINITY, name = "theta0")
+    theta = [m.addVar(lb = -GRB.INFINITY, name = 'theta' + str(i+1)) for i in range(M)]
+    theta0 = m.addVar(lb = -GRB.INFINITY, name = "theta0")
 
     xi = [m.addVar(name = 'xi' + str(i+1)) for i in range(N)]
 
     m.update()
 
-    obj = lamda/2.0*np.inner(theta, theta) + sum(xi)/N
+    obj = np.inner(theta, theta)*lamda/2.0 + sum(xi)
     m.setObjective(obj, GRB.MINIMIZE)
 
     for i in range(N):
