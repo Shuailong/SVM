@@ -13,8 +13,7 @@ Reference:
     2. https://github.com/cmaes/svmexample/blob/master/svm.py
 
 Issues:
-    1. dual form is much slower than primal form. (should be faster?)
-    2. dual form and primal form has different results. (implementation error?)    
+    1. dual form is much slower than primal form. (should be faster?) 
 
 """
 
@@ -37,6 +36,8 @@ def primal(C, X, y):
 
     m = Model("qp")
 
+    m.setParam('OutputFlag', False) # quiet
+
     theta = [m.addVar(lb = -GRB.INFINITY, name = 'theta' + str(i+1)) for i in range(M)]
     theta0 = m.addVar(lb = -GRB.INFINITY, name = "theta0")
 
@@ -55,6 +56,9 @@ def primal(C, X, y):
     theta = [i.X for i in theta]
     theta0 = theta0.X
 
+    margin = 1.0/np.linalg.norm(theta) if np.linalg.norm(theta) != 0 else float('inf')
+    print 'Margin:', margin
+
     return theta, theta0
 
 def dual(C, X, y):
@@ -71,6 +75,8 @@ def dual(C, X, y):
     N = len(X)
     m = Model("qp")
 
+    m.setParam('OutputFlag', False) # quiet
+
     alphas = [m.addVar(ub = C, name = 'alpha'+str(i+1)) for i in range(N)]
 
     m.update()
@@ -80,7 +86,7 @@ def dual(C, X, y):
         for j in range(N):
             subsum += alphas[i] * alphas[j] * y[i] * y[j] * np.inner(X[i], X[j])
 
-    obj = sum(alphas) - 0.5*subsum
+    obj = sum(alphas) - 0.5 * subsum
 
     m.setObjective(obj, GRB.MAXIMIZE)
 
@@ -91,7 +97,10 @@ def dual(C, X, y):
 
     support_vec_idx = [i for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < C*0.99999]
     print 'Number of support vectors:', len(support_vec_idx)
-    theta0 = np.median([y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in support_vec_idx])
+    if len(support_vec_idx) == 0:
+        theta0 = 0
+    else:
+        theta0 = np.median([y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in support_vec_idx])
 
     return theta, theta0
 

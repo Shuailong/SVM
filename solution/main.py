@@ -28,7 +28,7 @@ def predict_point(x, theta, theta0):
     :return {+1, -1}
     '''
 
-    if np.inner(x, theta) + theta0 >= 0:
+    if np.inner(x, theta) + theta0 > 0:
         return 1
     else:
         return -1
@@ -70,58 +70,56 @@ def score(y_predict, y_true):
 def main():
     start_time = time()
 
-    C = 1.0
+    for C in [0.001, 0.01, 0.1, 1, 10, 100, 1000]:
+        print 'C =', C
+        for dataset in ['A','B','C']:
+            print '#######################################'
+            print '# Dataset:', dataset, '                         #'
+            print '#######################################'
 
-    datasets = ['A','B','C']
+            trainX, trainY = read_data(dataset, 'train')
+            testX, testY = read_data(dataset, 'test')
 
-    for dataset in datasets:
-        print '#######################################'
-        print '# Dataset:', dataset, '                         #'
-        print '#######################################'
+            trainXPos = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == 1])
+            trainXNeg = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == -1])
 
-        trainX, trainY = read_data(dataset, 'train')
-        testX, testY = read_data(dataset, 'test')
+            if len(trainXPos) == 0 or len(trainXNeg) == 0:
+                # raise ValueError('Only one class in training set!')
+                pass
 
-        trainXPos = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == 1])
-        trainXNeg = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == -1])
+            # Primal form SVM
+            print '[Primal form]'
+            optimize_func = primal
+            print 'Optimizing...'
+            theta, theta0 = optimize_func(C, trainX, trainY)
 
-        if len(trainXPos) == 0 or len(trainXNeg) == 0:
-            # raise ValueError('Only one class in training set!')
-            pass
+            print 'Pridicting...'
+            train_Y = predict(trainX, theta, theta0)
+            train_score = score(train_Y, trainY)
+            test_Y = predict(testX, theta, theta0)
+            test_score = score(test_Y, testY)
+            print '---------------------------------------'
+            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
+            print '---------------------------------------'
 
-        # Primal form SVM
-        print '[Primal form]'
-        optimize_func = primal
-        print 'Optimizing...'
-        theta, theta0 = optimize_func(C, trainX, trainY)
+            # Dual form SVM
+            print '[Dual form]'
+            optimize_func = dual
+            print 'Optimizing...'
+            theta, theta0 = optimize_func(C, trainX, trainY)
 
-        print 'Pridicting...'
-        train_Y = predict(trainX, theta, theta0)
-        train_score = score(train_Y, trainY)
-        test_Y = predict(testX, theta, theta0)
-        test_score = score(test_Y, testY)
-        print '---------------------------------------'
-        print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-        print '---------------------------------------'
+            print 'Pridicting...'
+            train_Y = predict(trainX, theta, theta0)
+            train_score = score(train_Y, trainY)
+            test_Y = predict(testX, theta, theta0)
+            test_score = score(test_Y, testY)
+            print '---------------------------------------'
+            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
+            print '---------------------------------------'
 
-        # Dual form SVM
-        print '[Dual form]'
-        optimize_func = dual
-        print 'Optimizing...'
-        theta, theta0 = optimize_func(C, trainX, trainY)
-
-        print 'Pridicting...'
-        train_Y = predict(trainX, theta, theta0)
-        train_score = score(train_Y, trainY)
-        test_Y = predict(testX, theta, theta0)
-        test_score = score(test_Y, testY)
-        print '---------------------------------------'
-        print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-        print '---------------------------------------'
+            print
 
         print
-
-    print
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'
 
 
