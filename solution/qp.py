@@ -9,8 +9,12 @@ Created by Shuailong on 2016-03-08.
 Qudratic Programming to solve SVM with errors and offset.
 
 Reference: 
-        1. http://www.gurobi.com/documentation/6.5/examples/qp_py.html
-        2. https://github.com/cmaes/svmexample/blob/master/svm.py
+    1. http://www.gurobi.com/documentation/6.5/examples/qp_py.html
+    2. https://github.com/cmaes/svmexample/blob/master/svm.py
+
+Issues:
+    1. dual form is much slower than primal form. (should be faster?)
+    2. dual form and primal form has different results. (implementation error?)    
 
 """
 
@@ -33,17 +37,14 @@ def primal(C, X, y):
 
     m = Model("qp")
 
-    theta_lbs = [-GRB.INFINITY]*M
-    theta_names = ['theta' + str(i+1) for i in range(M)]
-    theta = [m.addVar(lb = theta_lb, name = theta_name) for theta_lb, theta_name in zip(theta_lbs, theta_names)]
-    theta0 = m.addVar(lb=-GRB.INFINITY, name="theta0")
+    theta = [m.addVar(lb =- GRB.INFINITY, name = 'theta' + str(i+1)) for i in range(M)]
+    theta0 = m.addVar(lb =- GRB.INFINITY, name = "theta0")
 
-    xi_names = ['xi' + str(i+1) for i in range(N)]
-    xi = [m.addVar(name = xi_name) for xi_name in xi_names]
+    xi = [m.addVar(name = 'xi' + str(i+1)) for i in range(N)]
 
     m.update()
 
-    obj = lamda/2.0*np.inner(theta, theta) + 1.0/N*sum(xi)
+    obj = lamda/2.0*np.inner(theta, theta) + sum(xi)/N
     m.setObjective(obj, GRB.MINIMIZE)
 
     for i in range(N):
@@ -82,16 +83,15 @@ def dual(C, X, y):
     obj = sum(alphas) - 0.5*subsum
 
     m.setObjective(obj, GRB.MAXIMIZE)
-    m.addConstr(sum([alphas[i]*y[i] for i in range(N)]) == 0)
 
+    m.addConstr(sum([alphas[i]*y[i] for i in range(N)]) == 0)
     m.optimize()
 
     theta = sum([np.multiply(alphas[i].X*y[i], X[i]) for i in range(N)])
 
-    theta0s = [y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < C*0.99999]
-    theta0 = np.median(theta0s)
-
-    print 'Number of support vectors:', len(theta0s)
+    support_vec_idx = [i for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < C*0.99999]
+    print 'Number of support vectors:', len(support_vec_idx)
+    theta0 = np.median([y[i]-sum([alphas[j].X*y[j]*np.inner(X[i],X[j]) for j in range(N)]) for i in support_vec_idx])
 
     return theta, theta0
 
