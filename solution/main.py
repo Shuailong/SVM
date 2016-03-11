@@ -11,43 +11,13 @@ Main entry of Machine Learining Assignment 2.
 """
 
 from dataset import read_data
-from qp import primal, dual
+import mysvm
 from vis import plot
 
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
-
-def predict_point(x, theta, theta0):
-    '''
-    Predict the class of a data point.
-
-    :type x: numpy.ndarray
-    :type theta: numpy.ndarray
-    :type theta: numpy.float64
-    :return {+1, -1}
-    '''
-
-    if np.inner(x, theta) + theta0 > 0:
-        return 1
-    else:
-        return -1
-
-def predict(X, theta, theta0):
-    '''
-    Predict the classes of a dataset X
-
-    :type X: numpy.ndarray[numpy.ndarray]
-    :type theta: numpy.ndarray
-    :type theta: numpy.float64
-    :return List[{+1, -1}]
-    '''
-    n = len(X)
-    y = [0]*n
-    for i in range(n):
-        y[i] = predict_point(X[i], theta, theta0)
-
-    return y
+from random import shuffle
 
 def score(y_predict, y_true):
     '''
@@ -70,56 +40,77 @@ def score(y_predict, y_true):
 def main():
     start_time = time()
 
-    for C in [0.001, 0.01, 0.1, 1, 10, 100, 1000]:
-        print 'C =', C
-        for dataset in ['A','B','C']:
-            print '#######################################'
-            print '# Dataset:', dataset, '                         #'
-            print '#######################################'
+    for dataset in ['A','B','C']:
 
-            trainX, trainY = read_data(dataset, 'train')
-            testX, testY = read_data(dataset, 'test')
+        print 'Dataset:', dataset
 
-            trainXPos = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == 1])
-            trainXNeg = np.asarray([trainX[i,:] for i in range(len(trainX)) if trainY[i] == -1])
+        trainX, trainY = read_data(dataset, 'train')
+        testX, testY = read_data(dataset, 'test')
 
-            if len(trainXPos) == 0 or len(trainXNeg) == 0:
-                # raise ValueError('Only one class in training set!')
-                pass
+        N = len(trainX)
+        M = len(trainX[0])
 
-            # Primal form SVM
-            print '[Primal form]'
-            optimize_func = primal
-            print 'Optimizing...'
-            theta, theta0 = optimize_func(C, trainX, trainY)
+        orders = range(N)
+        shuffle(orders)
+        cvX = np.asarray([trainX[orders[i], :] for i in range(N/5)])
+        cvY = np.asarray([trainY[orders[i]] for i in range(N/5)])
 
-            print 'Pridicting...'
-            train_Y = predict(trainX, theta, theta0)
+        trainX = np.asarray([trainX[orders[i], :] for i in range(N/5, N)])
+        trainY = np.asarray([trainY[orders[i]] for i in range(N/5, N)])
+
+        trainXPos = np.asarray([trainX[i, :] for i in range(len(trainX)) if trainY[i] == 1])
+        trainXNeg = np.asarray([trainX[i, :] for i in range(len(trainX)) if trainY[i] == -1])
+
+        if len(trainXPos) == 0 or len(trainXNeg) == 0:
+            # raise ValueError('Only one class in training set!')
+            pass
+
+        print 'Training size/Cross validation size:', len(trainX), '/', len(cvX)
+
+        best_C = []
+        best_cv_accuracy = 0
+
+        C = 0.001
+        MAX_C = 10000000000
+        while C < MAX_C:
+            # print 'C =', C
+
+            # print 'Optimizing...'
+
+            clf = mysvm.SVC(C=C)
+            clf.fit(trainX, trainY)
+
+            # print 'Predicting...'
+            train_Y = clf.predict(trainX)
             train_score = score(train_Y, trainY)
-            test_Y = predict(testX, theta, theta0)
-            test_score = score(test_Y, testY)
-            print '---------------------------------------'
-            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-            print '---------------------------------------'
+            cv_Y = clf.predict(cvX)
+            cv_score = score(cv_Y, cvY)
 
-            # Dual form SVM
-            print '[Dual form]'
-            optimize_func = dual
-            print 'Optimizing...'
-            theta, theta0 = optimize_func(C, trainX, trainY)
+            if cv_score > best_cv_accuracy:
+                best_cv_accuracy = cv_score
+                best_C = [C]
+            elif cv_score == best_cv_accuracy:
+                best_C.append(C)
 
-            print 'Pridicting...'
-            train_Y = predict(trainX, theta, theta0)
-            train_score = score(train_Y, trainY)
-            test_Y = predict(testX, theta, theta0)
-            test_score = score(test_Y, testY)
-            print '---------------------------------------'
-            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-            print '---------------------------------------'
+            C *= 10
 
-            print
+        best_C = np.median(np.asarray(best_C))
+        print 'Best C/CV accuracy:', best_C, '/', best_cv_accuracy
 
-        print
+        clf = mysvm.SVC(C=best_C)
+        clf.fit(trainX, trainY)
+
+        train_Y = clf.predict(trainX)
+        train_score = score(train_Y, trainY)
+        test_Y = clf.predict(testX)
+        test_score = score(test_Y, testY)
+
+        print '---------------------------------------'
+        print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
+        print '---------------------------------------'
+        print 
+
+
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'
 
 
