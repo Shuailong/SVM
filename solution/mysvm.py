@@ -24,7 +24,7 @@ from math import exp, tanh
 
 class SVC:
 
-    def __init__(self, C=1.0, kernel='linear', degree=3, gamma='auto', coef0=0.0, dual=False):
+    def __init__(self, C=1.0, kernel='linear', degree=3, gamma='auto', coef0=0.0, is_dual=False):
         #Penalty parameter C of the error term.
         self.C = C
         self.degree = degree
@@ -32,7 +32,7 @@ class SVC:
         self.coef0 = coef0
         kernels = {'linear': self.linear, 'poly': self.poly, 'rbf': self.rbf, 'sigmoid': self.sigmoid}
         self.kernel = kernels.get(kernel, 'linear')
-        self.dual = dual
+        self.is_dual = is_dual
 
     # Kernel functions
 
@@ -87,6 +87,14 @@ class SVC:
 
         self.margin = 1.0/np.linalg.norm(theta) if np.linalg.norm(theta) != 0 else float('inf')
 
+        self.support_ = []
+        for i in range(N):
+             if abs(np.inner(self.X[i], theta) + theta0 - 1) < 1e-8 or abs(np.inner(self.X[i], theta) + theta0 + 1) < 1e-8:
+                self.support_.append(i)
+        self.support_ = np.asarray(self.support_)
+        self.support_vectors_ = np.asarray([self.X[i] for i in self.support_])
+        self.n_support_ = len(self.support_)
+
         self.coef_ = theta
         self.intercept_ = theta0
 
@@ -106,14 +114,21 @@ class SVC:
 
         m.setParam('OutputFlag', False) # quiet
 
-        alphas = [m.addVar(ub = C, name = 'alpha'+str(i+1)) for i in range(N)]
+        alphas = [m.addVar(ub = self.C, name = 'alpha'+str(i+1)) for i in range(N)]
 
         m.update()
 
         subsum = 0
         for i in range(N):
             for j in range(N):
-                subsum += alphas[i] * alphas[j] * self.y[i] * self.y[j] * self.kernel(X[i], X[j])
+                if i < j:
+                    subsum += alphas[i] * alphas[j] * self.y[i] * self.y[j] * self.kernel(self.X[i], self.X[j])
+        subsum *= 2
+        for i in range(N):
+            for j in range(N):
+                if i == j:
+                    subsum += alphas[i] * alphas[j] * self.y[i] * self.y[j] * self.kernel(self.X[i], self.X[j])
+
 
         obj = sum(alphas) - 0.5 * subsum
 
@@ -122,19 +137,24 @@ class SVC:
         m.addConstr(sum([alphas[i]*self.y[i] for i in range(N)]) == 0)
         m.optimize()
 
+        self.dual_coef_ = [alpha.X for alpha in alphas]
+
         theta = sum([np.multiply(alphas[i].X*self.y[i], self.X[i]) for i in range(N)])
 
-        self.support_ = np.asarray([i for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < C*0.99999])
+        self.support_ = np.asarray([i for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < self.C*0.99999])
         
         if len(self.support_) == 0:
             theta0 = 0
         else:
-            theta0 = np.median([y[i]-sum([alphas[j].X*self.y[j]*self.kernel(X[i],X[j]) for j in range(N)]) for i in support_vec_idx])
+            theta0 = np.median([self.y[i]-sum([alphas[j].X*self.y[j]*self.kernel(self.X[i],  self.X[j]) for j in range(N)]) for i in self.support_])
 
         self.support_vectors_ = np.asarray([self.X[i] for i in self.support_])
-        self.n_support_ = len(support_vec_idx)
+        self.n_support_ = len(self.support_)
+
+        self.margin = 1.0/np.linalg.norm(theta) if np.linalg.norm(theta) != 0 else float('inf')
+
         self.coef_ = theta
-        self.intercept_ = theta
+        self.intercept_ = theta0
 
  
     def fit(self, X, y):
@@ -144,7 +164,7 @@ class SVC:
         if self.gamma == 'auto':
             self.gamma = 1.0/len(X[0])
 
-        if self.dual:
+        if self.is_dual:
             self.dual()
         else:
             self.primal()
@@ -156,8 +176,20 @@ class SVC:
         :type X: numpy.ndarray[numpy.ndarray]
         :return List[{+1, -1}]
         '''
-
-        return [1 if np.inner(X[i], self.coef_) + self.intercept_ > 0 else -1 for i in range(len(X))]
+        y = [0]*len(X)
+        if self.is_dual:
+            for i in range(len(X)):
+                if sum([self.dual_coef_[j] * self.y[j] * self.kernel(self.X[j], X[i]) for j in range(len(self.X))]) + self.intercept_ > 0:
+                    y[i] = 1
+                else:
+                    y[i] = -1
+        else:
+            for i in range(len(X)):
+                if np.inner(X[i], self.coef_) + self.intercept_ > 0:
+                    y[i] = 1
+                else:
+                    y[i] = -1
+        return y
  
 
 def main():
