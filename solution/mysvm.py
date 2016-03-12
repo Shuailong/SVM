@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-qp.py
+mysvm.py
  
 Created by Shuailong on 2016-03-08.
 
@@ -46,7 +46,7 @@ class SVC:
         return exp(-self.gamma*np.inner(x1-x2, x1-x2))
 
     def sigmoid(self, x1, x2):
-        return tanh(gamma*np.inner(x1, x2) + self.coef0)
+        return tanh(self.gamma*np.inner(x1, x2) + self.coef0)
 
 
     def primal(self):
@@ -87,14 +87,16 @@ class SVC:
 
         self.margin = 1.0/np.linalg.norm(theta) if np.linalg.norm(theta) != 0 else float('inf')
 
-        self.support_ = []
+        self.support_ = [[],[]]
         for i in range(N):
-             if abs(np.inner(self.X[i], theta) + theta0 - 1) < 1e-8 or abs(np.inner(self.X[i], theta) + theta0 + 1) < 1e-8:
-                self.support_.append(i)
-        self.support_ = np.asarray(self.support_)
+            if abs(np.inner(self.X[i], theta) + theta0 + 1) < 1e-8:
+                self.support_[0].append(i)
+            elif abs(np.inner(self.X[i], theta) + theta0 - 1) < 1e-8:
+                self.support_[1].append(i)
+        self.n_support_ = [len(support_) for support_ in self.support_]
+        self.support_ = np.asarray(self.support_[0] + self.support_[1])
         self.support_vectors_ = np.asarray([self.X[i] for i in self.support_])
-        self.n_support_ = len(self.support_)
-
+        
         self.coef_ = theta
         self.intercept_ = theta0
 
