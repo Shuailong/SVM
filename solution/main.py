@@ -98,25 +98,25 @@ def main():
         testX, testY = read_data(dataset, 'test')
 
         # optimal_C = find_optimal_C(trainX, trainY)
-        # C = 0.001
-        # while C <= 1000:    
-        #     print 'C:', C
-        clf = mysvm.SVC(C=1.0, is_dual=False, kernel='rbf')
-        # clf = svm.SVC(C=1.0, kernel='sigmoid')
-        clf.fit(trainX, trainY)
-        train_Y = clf.predict(trainX)
-        train_score = score(train_Y, trainY)
-        test_Y = clf.predict(testX)
-        test_score = score(test_Y, testY)
+        C = 0.001
+        while C <= 1000:    
+            print 'C:', C
+            clf = mysvm.SVC(C=1.0, is_dual=False, kernel='linear')
+            # clf = svm.SVC(C=C, kernel='linear')
+            clf.fit(trainX, trainY)
+            train_Y = clf.predict(trainX)
+            train_score = score(train_Y, trainY)
+            test_Y = clf.predict(testX)
+            test_score = score(test_Y, testY)
 
-        print 'Number of SVs:', clf.n_support_
-        # print 'Margin:', clf.margin
+            print 'Number of SVs:', clf.n_support_
+            # print 'Margin:', clf.margin
 
-        print '---------------------------------------'
-        print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-        print '---------------------------------------'
-        print 
-            # C *= 10
+            print '---------------------------------------'
+            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
+            print '---------------------------------------'
+            print 
+            C *= 10
 
 
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'
