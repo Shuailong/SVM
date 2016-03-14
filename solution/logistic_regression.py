@@ -23,14 +23,26 @@ from math import exp, log
 
 class LogisticRegression:
 
-    def __init__(self, max_iter=1000000, learning_rate=1.0, lamda=1.0, tol=1e-3):
+    def __init__(self, max_iter=10000, learning_rate=1.0, lamda=1.0, tol=1e-3):
         self.max_iter = max_iter
         self.learning_rate = learning_rate
         self.lamda = lamda
         self.tol = tol
 
+        self.max_real_num = 50
+
     def loss(self, X, y):
-        return sum([log(1+exp(-y[i]*(np.inner(self.theta, X[i]) + self.theta0))) for i in range(len(X))]) + self.lamda/2.0*np.inner(self.theta, self.theta)
+        res = 0
+        for i in range(len(X)):
+            real_num = -y[i]*(np.inner(self.theta, X[i]) + self.theta0)
+            if real_num > self.max_real_num:
+                real_num = self.max_real_num
+            elif real_num < -self.max_real_num:
+                real_num = -self.max_real_num
+            res += log(1 + exp(real_num))
+        res += self.lamda / 2.0 * np.inner(self.theta, self.theta)
+
+        return res
 
     def fit(self, X, y):
         '''
@@ -51,9 +63,18 @@ class LogisticRegression:
         for i in range(self.max_iter): 
             shuffle(orders)
             for j in orders:
-                if y[j] * (np.inner(self.theta, X[j]) + self.theta0) <= 0:
-                    self.theta -= self.learning_rate*(-np.multiply(X[j], y[j]/(1+exp(y[j]*(np.inner(self.theta, X[j]) + self.theta0))) + np.multiply(self.lamda, self.theta)))
-                    self.theta0 -= self.learning_rate*(-y[j]/(1+exp(y[j]*(np.inner(self.theta, X[j]) + self.theta0))))
+                # if y[j] * (np.inner(self.theta, X[j]) + self.theta0) <= 0:
+                real_num = y[j]*(np.inner(self.theta, X[j]) + self.theta0)
+                if real_num > self.max_real_num:
+                    real_num = self.max_real_num
+                elif real_num < -self.max_real_num:
+                    real_num = -self.max_real_num
+
+        
+                self.theta -= self.learning_rate * (-np.multiply(X[j], y[j]/(1+exp(real_num))) + np.multiply(self.lamda, self.theta))
+                self.theta0 -= self.learning_rate * (-y[j]/(1+exp(real_num)))
+
+
             loss = self.loss(X, y)
             if abs(loss-last_loss) < self.tol:
                 print 'Iterations/Loss', i, '/', loss
