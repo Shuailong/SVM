@@ -98,11 +98,7 @@ def main():
         trainX, trainY = read_data(dataset, 'train')
         testX, testY = read_data(dataset, 'test')
 
-        # trainXPos = trainX[trainY == 1]
-        # trainXNeg = trainX[trainY == -1]
-
-        # plt.plot(trainXPos[:,0], trainXPos[:,1], 'ro')
-        # plt.plot(trainXNeg[:,0], trainXNeg[:,1], 'bo')
+        # plt.scatter(trainX[:,0], trainX[:,1], c=trainY, cmap=plt.cm.Paired)
 
         # plt.show()
         # continue
