@@ -12,6 +12,7 @@ Main entry of Machine Learining Assignment 2.
 
 from dataset import read_data
 import mysvm
+import logistic_regression
 
 from sklearn import svm
 from time import time
@@ -103,25 +104,29 @@ def main():
         # plt.show()
         # continue
 
-        optimal_C = find_optimal_C(trainX, trainY)
+        # optimal_C = find_optimal_C(trainX, trainY)
         # C = 0.001
         # while C <= 1000:    
         #     print 'C:', C
-        clf = mysvm.SVC(C=optimal_C, is_dual=False)
-        # clf = svm.SVC(C=optimal_C)
-        clf.fit(trainX, trainY)
-        train_Y = clf.predict(trainX)
-        train_score = score(train_Y, trainY)
-        test_Y = clf.predict(testX)
-        test_score = score(test_Y, testY)
+        lamda = 0.001
+        while lamda <= 1000:
+            clf = logistic_regression.LogisticRegression(learning_rate=0.001, lamda=lamda)
+            # clf = mysvm.SVC(C=1.0, is_dual=False)
+            # clf = svm.SVC(C=optimal_C)
+            clf.fit(trainX, trainY)
+            train_Y = clf.predict(trainX)
+            train_score = score(train_Y, trainY)
+            test_Y = clf.predict(testX)
+            test_score = score(test_Y, testY)
 
-        # print 'Number of SVs:', sum(clf.n_support_)
-        # print 'Margin:', clf.margin
+            # print 'Number of SVs:', sum(clf.n_support_)
+            # print 'Margin:', clf.margin
 
-        print '---------------------------------------'
-        print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
-        print '---------------------------------------'
-        print 
+            print '---------------------------------------'
+            print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
+            print '---------------------------------------'
+            print 
+            lamda *= 10
             # C *= 10
 
 
