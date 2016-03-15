@@ -12,6 +12,10 @@ References:
     1. http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     2. http://research.microsoft.com/en-us/um/people/minka/papers/logreg/minka-logreg.pdf
     3. http://lingpipe-blog.com/2012/02/16/howprevent-overflow-underflow-logistic-regression/
+
+Issues:
+    1. When lambda is 0.1 or larger, overflow or underflow problems may occur.
+    
 """
 
 from dataset import read_data
