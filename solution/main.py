@@ -105,32 +105,32 @@ def main():
         # continue
 
         # optimal_C = find_optimal_C(trainX, trainY)
-        # C = 0.001
-        # while C <= 1000:    
-        #     print 'C:', C
-        lamda = 0.001
-        learning_rate = 0.0001
-        while lamda <= 1000:
-            clf = logistic_regression.LogisticRegression(learning_rate=learning_rate, lamda=lamda)
-            # clf = mysvm.SVC(C=1.0, is_dual=False)
-            # clf = svm.SVC(C=optimal_C)
+        C = 0.001
+        while C <= 1000:    
+        # lamda = 0.001
+        # learning_rate = 0.0001
+        # while lamda <= 1000:
+            # clf = logistic_regression.LogisticRegression(learning_rate=learning_rate, lamda=lamda)
+            clf = mysvm.SVC(C=C, is_dual=False, kernel='linear')
+            # clf = svm.SVC(C=C, kernel='linear')
             clf.fit(trainX, trainY)
             train_Y = clf.predict(trainX)
             train_score = score(train_Y, trainY)
             test_Y = clf.predict(testX)
             test_score = score(test_Y, testY)
 
-            # print 'Number of SVs:', sum(clf.n_support_)
+            print 'C:', C
+            print 'Number of SVs:', clf.n_support_
             # print 'Margin:', clf.margin
             print 'Dataset:', dataset
-            print 'Lambda:', lamda
-            print 'Learning rate:', learning_rate
+            # print 'Lambda:', lamda
+            # print 'Learning rate:', learning_rate
             print '---------------------------------------'
             print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
             print '---------------------------------------'
             print 
-            lamda *= 10
-            # C *= 10
+            # lamda *= 10
+            C *= 10
 
 
     print '----------' + str(round(time() - start_time, 2)) + ' seconds.---------------'

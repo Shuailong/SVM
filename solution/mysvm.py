@@ -87,14 +87,8 @@ class SVC:
 
         self.margin = 1.0/np.linalg.norm(theta) if np.linalg.norm(theta) != 0 else float('inf')
 
-        self.support_ = [[],[]]
-        for i in range(N):
-            if abs(np.inner(self.X[i], theta) + theta0 + 1) < 1e-8:
-                self.support_[0].append(i)
-            elif abs(np.inner(self.X[i], theta) + theta0 - 1) < 1e-8:
-                self.support_[1].append(i)
-        self.n_support_ = [len(support_) for support_ in self.support_]
-        self.support_ = np.asarray(self.support_[0] + self.support_[1])
+        self.support_ = np.asarray([i for i in range(N) if abs(np.inner(self.X[i], theta) + theta0) <= 1*(1+1e-7)])
+        self.n_support_ = len(self.support_)
         self.support_vectors_ = np.asarray([self.X[i] for i in self.support_])
         
         self.coef_ = theta
@@ -142,14 +136,10 @@ class SVC:
         self.dual_coef_ = [alpha.X for alpha in alphas]
 
         theta = sum([np.multiply(alphas[i].X*self.y[i], self.X[i]) for i in range(N)])
+        theta0s = [self.y[i]-sum([alphas[j].X*self.y[j]*self.kernel(self.X[i],  self.X[j]) for j in range(N)]) for i in range(N) if alphas[i].X > 1e-7 and  alphas[i].X < self.C * (1-1e-7)]
+        theta0 = np.median(theta0s) if len(theta0s) > 0 else 0
 
-        self.support_ = np.asarray([i for i in range(N) if alphas[i].X > 1e-8 and alphas[i].X < self.C*0.99999])
-        
-        if len(self.support_) == 0:
-            theta0 = 0
-        else:
-            theta0 = np.median([self.y[i]-sum([alphas[j].X*self.y[j]*self.kernel(self.X[i],  self.X[j]) for j in range(N)]) for i in self.support_])
-
+        self.support_ = np.asarray([i for i in range(N) if alphas[i].X > 1e-7])
         self.support_vectors_ = np.asarray([self.X[i] for i in self.support_])
         self.n_support_ = len(self.support_)
 
