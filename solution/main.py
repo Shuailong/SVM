@@ -109,8 +109,9 @@ def main():
         # while C <= 1000:    
         #     print 'C:', C
         lamda = 0.001
+        learning_rate = 0.0001
         while lamda <= 1000:
-            clf = logistic_regression.LogisticRegression(learning_rate=0.01, lamda=lamda)
+            clf = logistic_regression.LogisticRegression(learning_rate=learning_rate, lamda=lamda)
             # clf = mysvm.SVC(C=1.0, is_dual=False)
             # clf = svm.SVC(C=optimal_C)
             clf.fit(trainX, trainY)
@@ -123,6 +124,7 @@ def main():
             # print 'Margin:', clf.margin
             print 'Dataset:', dataset
             print 'Lambda:', lamda
+            print 'Learning rate:', learning_rate
             print '---------------------------------------'
             print 'Training/test accuracy:', str(round(train_score*100, 2)) + '%', '/', str(round(test_score*100, 2)) + '%'
             print '---------------------------------------'

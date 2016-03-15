@@ -23,7 +23,7 @@ from math import exp, log
 
 class LogisticRegression:
 
-    def __init__(self, max_iter=10000, learning_rate=1.0, lamda=1.0, tol=1e-3):
+    def __init__(self, max_iter=1000, learning_rate=1.0, lamda=1.0, tol=1e-3):
         self.max_iter = max_iter
         self.learning_rate = learning_rate
         self.lamda = lamda
@@ -60,31 +60,32 @@ class LogisticRegression:
         orders = range(N)
 
         last_loss = 0
+        loss = 0
+        early_stop = False
         for i in range(self.max_iter): 
             shuffle(orders)
             for j in orders:
-                # if y[j] * (np.inner(self.theta, X[j]) + self.theta0) <= 0:
                 real_num = y[j]*(np.inner(self.theta, X[j]) + self.theta0)
                 if real_num > self.max_real_num:
                     real_num = self.max_real_num
                 elif real_num < -self.max_real_num:
                     real_num = -self.max_real_num
 
-        
-                self.theta -= self.learning_rate * (-np.multiply(X[j], y[j]/(1+exp(real_num))) + np.multiply(self.lamda, self.theta))
+                self.theta -= self.learning_rate * (-np.multiply(y[j]/(1+exp(real_num)), X[j]) + np.multiply(self.lamda, self.theta))
                 self.theta0 -= self.learning_rate * (-y[j]/(1+exp(real_num)))
-
 
             loss = self.loss(X, y)
             if abs(loss-last_loss) < self.tol:
                 print 'Iterations/Loss', i, '/', loss
+                early_stop = True
                 break
             last_loss = loss
+        if not early_stop:
+            print 'Iterations/Loss', self.max_iter, '/', loss
 
 
     def predict(self, X):
         return [1 if np.inner(self.theta, x) + self.theta0 > 0 else -1 for x in X]
-
 
 def main():
     trainX, trainY = read_data('A', 'train')
