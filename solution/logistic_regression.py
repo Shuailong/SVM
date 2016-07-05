@@ -51,7 +51,7 @@ class LogisticRegression:
     def fit(self, X, y):
         '''
         minimize
-            sum(log(1 + exp(-y[i] * (theta.* X[i] + theta0)))) + 2/lamda*(theta.*theta)
+            sum(log(1 + exp(-y[i] * (theta.* X[i] + theta0)))) + 1/2*lamda*(theta.*theta)
         subject to
             theta, theta0: [-inf, inf]
         '''
